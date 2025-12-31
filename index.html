@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiniChat - Secure Private Messaging</title>
+    <title>MiniChat - Real Time Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        /* CSS Variables for theming */
+        /* CSS Variables */
         :root {
             --primary-color: #3a86ff;
             --primary-dark: #2667cc;
@@ -27,7 +28,6 @@
             --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
 
-        /* Dark theme variables */
         .dark-mode {
             --primary-color: #5a9cff;
             --primary-dark: #3a86ff;
@@ -40,7 +40,6 @@
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
-        /* Reset and base styles */
         * {
             margin: 0;
             padding: 0;
@@ -106,7 +105,7 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* Login/Signup Component */
+        /* Login/Signup */
         .auth-container {
             display: flex;
             flex-direction: column;
@@ -195,16 +194,6 @@
             transform: translateY(-2px);
         }
 
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(58, 134, 255, 0.1);
-        }
-
         .auth-switch {
             margin-top: 20px;
             color: var(--text-light);
@@ -222,7 +211,7 @@
             text-decoration: underline;
         }
 
-        /* Chat App Component */
+        /* Chat App */
         .chat-app {
             display: flex;
             flex-grow: 1;
@@ -436,10 +425,6 @@
             color: var(--text-color);
         }
 
-        .dark-mode .chat-action-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
         .messages-container {
             flex-grow: 1;
             overflow-y: auto;
@@ -493,44 +478,6 @@
 
         .message.received .message-time {
             color: var(--text-light);
-        }
-
-        .read-receipt {
-            color: #a0e7ff;
-            font-size: 0.8rem;
-        }
-
-        .message.fading {
-            animation: fadeOut 3s forwards;
-        }
-
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px 15px;
-            background-color: var(--card-color);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            align-self: flex-start;
-            max-width: 100px;
-            margin-bottom: 10px;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--text-light);
-            animation: typingBounce 1.4s infinite ease-in-out;
-        }
-
-        .typing-dot:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-
-        .typing-dot:nth-child(2) {
-            animation-delay: -0.16s;
         }
 
         .message-input-area {
@@ -597,18 +544,10 @@
             background-color: var(--card-color);
         }
 
-        .encryption-indicator i {
-            color: var(--success-color);
-        }
-
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-            to { opacity: 0; }
         }
 
         @keyframes messageSlide {
@@ -616,12 +555,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        @keyframes typingBounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-        }
-
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -635,10 +569,6 @@
 
             .sidebar.active {
                 transform: translateX(0);
-            }
-
-            .chat-app {
-                position: relative;
             }
 
             .mobile-menu-btn {
@@ -661,19 +591,40 @@
             }
         }
 
-        /* Utility Classes */
         .hidden {
             display: none !important;
         }
 
-        .fade-out {
-            animation: fadeOut 2s forwards;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .notification.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .notification.error {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .notification.info {
+            background-color: var(--primary-color);
+            color: white;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header with logo and theme toggle -->
+        <!-- Header -->
         <header class="header">
             <div class="logo">
                 <i class="fas fa-comment-dots"></i>
@@ -684,26 +635,31 @@
             </button>
         </header>
 
-        <!-- Authentication Component -->
+        <!-- Authentication -->
         <div class="auth-container" id="authContainer">
             <div class="auth-card">
                 <h1 class="auth-title" id="authTitle">Welcome to MiniChat</h1>
-                <p class="auth-subtitle" id="authSubtitle">Secure, private messaging with end-to-end encryption</p>
+                <p class="auth-subtitle" id="authSubtitle">Real-time chat with real users</p>
                 
                 <form class="auth-form" id="authForm">
                     <div class="input-group">
                         <label for="username">Username</label>
-                        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        <input type="text" id="username" name="username" placeholder="Choose a username" required>
                     </div>
                     
                     <div class="input-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <input type="password" id="password" name="password" placeholder="Enter password" required>
                     </div>
                     
-                    <div class="input-group" id="confirmPasswordGroup">
+                    <div class="input-group hidden" id="confirmPasswordGroup">
                         <label for="confirmPassword">Confirm Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password">
+                    </div>
+                    
+                    <div class="input-group hidden" id="nameGroup">
+                        <label for="name">Display Name</label>
+                        <input type="text" id="name" name="name" placeholder="Your display name">
                     </div>
                     
                     <button type="submit" class="btn btn-primary" id="authSubmit">
@@ -718,9 +674,9 @@
             </div>
         </div>
 
-        <!-- Chat Application Component -->
+        <!-- Chat Application -->
         <div class="chat-app hidden" id="chatApp">
-            <!-- Sidebar with user list -->
+            <!-- Sidebar -->
             <div class="sidebar" id="sidebar">
                 <div class="user-info">
                     <div class="user-avatar" id="currentUserAvatar">U</div>
@@ -738,12 +694,12 @@
                 </div>
                 
                 <div class="users-list" id="usersList">
-                    <!-- Users will be populated here by JavaScript -->
+                    <!-- Users loaded here -->
                 </div>
                 
                 <div class="encryption-indicator">
-                    <i class="fas fa-lock"></i>
-                    <span>End-to-end encrypted</span>
+                    <i class="fas fa-database"></i>
+                    <span>Connected to Database</span>
                 </div>
             </div>
             
@@ -754,16 +710,16 @@
                         <button class="mobile-menu-btn" id="mobileMenuBtn">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <div class="chat-header-avatar" id="chatUserAvatar">F</div>
+                        <div class="chat-header-avatar" id="chatUserAvatar">U</div>
                         <div class="chat-user-details">
-                            <h3 id="chatUserName">Friend</h3>
-                            <p><span class="status-indicator" id="chatUserStatus"></span> <span id="chatUserStatusText">Online</span></p>
+                            <h3 id="chatUserName">Select a user</h3>
+                            <p><span class="status-indicator offline" id="chatUserStatus"></span> <span id="chatUserStatusText">Offline</span></p>
                         </div>
                     </div>
                     
                     <div class="chat-actions">
-                        <button class="chat-action-btn" id="clearChatBtn" title="Clear chat">
-                            <i class="fas fa-trash"></i>
+                        <button class="chat-action-btn" id="refreshBtn" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
                         </button>
                         <button class="chat-action-btn" id="logoutBtn" title="Logout">
                             <i class="fas fa-sign-out-alt"></i>
@@ -772,18 +728,13 @@
                 </div>
                 
                 <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will be populated here by JavaScript -->
-                    <div class="typing-indicator hidden" id="typingIndicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
+                    <!-- Messages loaded here -->
                 </div>
                 
                 <div class="message-input-area">
                     <form class="message-form" id="messageForm">
-                        <input type="text" class="message-input" id="messageInput" placeholder="Type your message...">
-                        <button type="submit" class="send-btn">
+                        <input type="text" class="message-input" id="messageInput" placeholder="Select a user to start chatting..." disabled>
+                        <button type="submit" class="send-btn" disabled>
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </form>
@@ -794,125 +745,76 @@
 
     <script>
         // ============================================
-        // MINICHAT - PRIVACY-FOCUSED CHAT APPLICATION
+        // MINICHAT - REAL DATABASE VERSION
         // ============================================
         
         // ====================
-        // DATA & STATE MANAGEMENT
+        // SUPABASE CONFIGURATION
         // ====================
         
-        // Mock user database (in a real app, this would be on a server)
-        const mockUsers = [
-            { id: 1, username: "alice", name: "Alice Johnson", avatarColor: "#8338ec", isOnline: true, lastSeen: "Just now" },
-            { id: 2, username: "bob", name: "Bob Smith", avatarColor: "#3a86ff", isOnline: false, lastSeen: "2 hours ago" },
-            { id: 3, username: "charlie", name: "Charlie Brown", avatarColor: "#06d6a0", isOnline: true, lastSeen: "5 minutes ago" },
-            { id: 4, username: "diana", name: "Diana Prince", avatarColor: "#ff006e", isOnline: true, lastSeen: "Just now" },
-            { id: 5, username: "edward", name: "Edward Norton", avatarColor: "#ffbe0b", isOnline: false, lastSeen: "1 day ago" },
-            { id: 6, username: "fiona", name: "Fiona Gallagher", avatarColor: "#fb5607", isOnline: true, lastSeen: "30 minutes ago" }
-        ];
+        // 🔴 REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'https://yaqeeozyifxbygrvemsp.supabase.co'; // Your Supabase URL
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhcWVlb3p5aWZ4YnlncnZlbXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMDE2MDMsImV4cCI6MjA4Mjc3NzYwM30.LohBsyR-jeSvQg1pClHlpUPI51Js5-cwN9T1Qra1czQ'; // Your anon/public key
         
-        // Mock messages database (in a real app, this would be on a server)
-        let mockMessages = [
-            { id: 1, senderId: 1, receiverId: 0, content: "Hey there! How are you?", timestamp: "10:30 AM", isRead: true },
-            { id: 2, senderId: 0, receiverId: 1, content: "I'm doing great! Working on a new project.", timestamp: "10:32 AM", isRead: true },
-            { id: 3, senderId: 1, receiverId: 0, content: "That sounds exciting! Tell me more about it.", timestamp: "10:35 AM", isRead: true },
-            { id: 4, senderId: 3, receiverId: 0, content: "Are we still meeting for lunch tomorrow?", timestamp: "Yesterday", isRead: true },
-            { id: 5, senderId: 0, receiverId: 3, content: "Yes, definitely! 12:30 at the usual place.", timestamp: "Yesterday", isRead: true }
-        ];
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         // Application state
         let currentUser = null;
         let selectedUser = null;
         let isLoginMode = true;
         let isDarkMode = false;
-        let typingTimeout = null;
+        let allUsers = [];
+        let messageSubscription = null;
         
-        // ====================
-        // DOM ELEMENTS
-        // ====================
-        
-        // Authentication elements
+        // DOM Elements
         const authContainer = document.getElementById('authContainer');
+        const chatApp = document.getElementById('chatApp');
+        const authForm = document.getElementById('authForm');
         const authTitle = document.getElementById('authTitle');
         const authSubtitle = document.getElementById('authSubtitle');
-        const authForm = document.getElementById('authForm');
-        const authSubmit = document.getElementById('authSubmit');
         const authSubmitText = document.getElementById('authSubmitText');
         const authSwitchText = document.getElementById('authSwitchText');
         const authSwitchBtn = document.getElementById('authSwitchBtn');
         const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
-        
-        // Chat app elements
-        const chatApp = document.getElementById('chatApp');
-        const themeToggle = document.getElementById('themeToggle');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
+        const nameGroup = document.getElementById('nameGroup');
+        const usersList = document.getElementById('usersList');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.querySelector('.send-btn');
         const currentUserAvatar = document.getElementById('currentUserAvatar');
         const currentUsername = document.getElementById('currentUsername');
         const currentUserStatus = document.getElementById('currentUserStatus');
         const currentUserStatusText = document.getElementById('currentUserStatusText');
-        const userSearch = document.getElementById('userSearch');
-        const usersList = document.getElementById('usersList');
         const chatUserAvatar = document.getElementById('chatUserAvatar');
         const chatUserName = document.getElementById('chatUserName');
         const chatUserStatus = document.getElementById('chatUserStatus');
         const chatUserStatusText = document.getElementById('chatUserStatusText');
-        const messagesContainer = document.getElementById('messagesContainer');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const messageForm = document.getElementById('messageForm');
-        const messageInput = document.getElementById('messageInput');
-        const clearChatBtn = document.getElementById('clearChatBtn');
+        const userSearch = document.getElementById('userSearch');
+        const themeToggle = document.getElementById('themeToggle');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const refreshBtn = document.getElementById('refreshBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         
         // ====================
         // UTILITY FUNCTIONS
         // ====================
         
-        /**
-         * Sanitize user input to prevent XSS attacks
-         * @param {string} input - The user input to sanitize
-         * @returns {string} - Sanitized input
-         */
-        function sanitizeInput(input) {
-            const div = document.createElement('div');
-            div.textContent = input;
-            return div.innerHTML;
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
         
-        /**
-         * Mock encryption function (in a real app, this would use proper encryption)
-         * @param {string} text - Text to encrypt
-         * @returns {string} - Mock encrypted text
-         */
-        function mockEncrypt(text) {
-            // In a real app, this would use proper end-to-end encryption
-            // For this demo, we'll just encode to base64 to simulate encryption
-            return btoa(unescape(encodeURIComponent(`ENCRYPTED:${text}`)));
-        }
-        
-        /**
-         * Mock decryption function
-         * @param {string} encryptedText - Text to decrypt
-         * @returns {string} - Decrypted text
-         */
-        function mockDecrypt(encryptedText) {
-            try {
-                // Decode from base64 and remove the encryption marker
-                const decoded = decodeURIComponent(escape(atob(encryptedText)));
-                return decoded.replace('ENCRYPTED:', '');
-            } catch (e) {
-                // If decryption fails, return the original text
-                console.error("Decryption failed:", e);
-                return encryptedText;
-            }
-        }
-        
-        /**
-         * Get user initials for avatar
-         * @param {string} name - User's name
-         * @returns {string} - Initials (first letter of first and last name)
-         */
         function getInitials(name) {
+            if (!name) return 'U';
             const names = name.split(' ');
             if (names.length >= 2) {
                 return (names[0][0] + names[1][0]).toUpperCase();
@@ -920,327 +822,274 @@
             return name.substring(0, 2).toUpperCase();
         }
         
-        /**
-         * Format timestamp for messages
-         * @returns {string} - Formatted time (HH:MM AM/PM)
-         */
-        function getCurrentTime() {
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
             const now = new Date();
-            let hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; // 0 should be 12
-            return `${hours}:${minutes} ${ampm}`;
-        }
-        
-        /**
-         * Simulate a typing indicator
-         * @param {number} userId - ID of user who is typing
-         */
-        function simulateTyping(userId) {
-            // Show typing indicator
-            typingIndicator.classList.remove('hidden');
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / 86400000);
             
-            // Hide after 1.5 seconds
-            setTimeout(() => {
-                typingIndicator.classList.add('hidden');
-            }, 1500);
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString();
         }
         
-        /**
-         * Simulate message read status
-         * @param {number} messageId - ID of message to mark as read
-         */
-        function simulateMessageRead(messageId) {
-            // Find message and mark as read
-            const message = mockMessages.find(m => m.id === messageId);
-            if (message && !message.isRead) {
-                message.isRead = true;
-                
-                // Update the message in the UI
-                const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-                if (messageElement) {
-                    const readReceipt = messageElement.querySelector('.read-receipt');
-                    if (readReceipt) {
-                        readReceipt.innerHTML = '<i class="fas fa-check-double"></i>';
-                    }
-                }
-            }
-        }
-        
-        /**
-         * Simulate auto-delete/fade for messages after they're read
-         * @param {number} messageId - ID of message to fade
-         */
-        function simulateAutoDelete(messageId) {
-            // In a real app, messages would be deleted from the server
-            // For this demo, we'll just fade them out after a delay
-            setTimeout(() => {
-                const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-                if (messageElement) {
-                    messageElement.classList.add('fading');
-                    
-                    // Remove from DOM after animation completes
-                    setTimeout(() => {
-                        if (messageElement.parentNode) {
-                            messageElement.remove();
-                        }
-                    }, 3000);
-                }
-            }, 5000); // 5 seconds after being marked as read
+        async function hashPassword(password) {
+            // Simple hash for demo (use bcrypt in production)
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
         
         // ====================
-        // AUTHENTICATION FUNCTIONS
+        // AUTHENTICATION
         // ====================
         
-        /**
-         * Initialize the authentication system
-         */
-        function initAuth() {
-            // Check if user is already logged in from localStorage
-            const savedUser = localStorage.getItem('minichat_user');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    showChatApp();
-                } catch (e) {
-                    console.error("Failed to parse saved user:", e);
-                    localStorage.removeItem('minichat_user');
-                }
-            }
-            
-            // Set up auth form submit handler
-            authForm.addEventListener('submit', handleAuthSubmit);
-            
-            // Set up auth mode switch (login/signup)
-            authSwitchBtn.addEventListener('click', toggleAuthMode);
-        }
-        
-        /**
-         * Handle authentication form submission
-         * @param {Event} e - Form submit event
-         */
-        function handleAuthSubmit(e) {
-            e.preventDefault();
-            
-            // Get form values
-            const username = sanitizeInput(document.getElementById('username').value.trim());
-            const password = sanitizeInput(document.getElementById('password').value);
-            const confirmPassword = isLoginMode ? null : sanitizeInput(document.getElementById('confirmPassword').value);
-            
-            // Validation
-            if (!username || !password) {
-                alert('Please fill in all fields');
-                return;
-            }
-            
-            if (!isLoginMode && password !== confirmPassword) {
-                alert('Passwords do not match');
-                return;
-            }
-            
-            if (!isLoginMode && password.length < 6) {
-                alert('Password must be at least 6 characters long');
-                return;
-            }
-            
-            // Simulate authentication (in a real app, this would call a server)
-            if (isLoginMode) {
-                // Check if user exists in mock data
-                const existingUser = mockUsers.find(user => user.username === username);
-                
-                if (existingUser) {
-                    // Simulate successful login
-                    currentUser = {
-                        id: 0, // Current user ID is always 0 in our mock data
-                        username: username,
-                        name: username.charAt(0).toUpperCase() + username.slice(1), // Capitalize username
-                        avatarColor: '#3a86ff',
-                        isOnline: true
-                    };
-                    
-                    // Save to localStorage
-                    localStorage.setItem('minichat_user', JSON.stringify(currentUser));
-                    
-                    // Show chat app
-                    showChatApp();
-                } else {
-                    alert('User not found. Please sign up first.');
-                    toggleAuthMode();
-                }
-            } else {
-                // Sign up - check if username is available
-                const existingUser = mockUsers.find(user => user.username === username);
-                
-                if (existingUser) {
-                    alert('Username already exists. Please choose another.');
-                    return;
-                }
-                
-                // Create new user
-                currentUser = {
-                    id: 0, // Current user ID is always 0 in our mock data
-                    username: username,
-                    name: username.charAt(0).toUpperCase() + username.slice(1), // Capitalize username
-                    avatarColor: '#3a86ff',
-                    isOnline: true
-                };
-                
-                // Save to localStorage
-                localStorage.setItem('minichat_user', JSON.stringify(currentUser));
-                
-                // Show chat app
-                showChatApp();
-            }
-            
-            // Clear form
-            authForm.reset();
-        }
-        
-        /**
-         * Toggle between login and signup modes
-         */
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             
             if (isLoginMode) {
-                // Switch to login mode
                 authTitle.textContent = 'Welcome Back to MiniChat';
-                authSubtitle.textContent = 'Secure, private messaging with end-to-end encryption';
+                authSubtitle.textContent = 'Login to continue chatting';
                 authSubmitText.textContent = 'Login';
                 authSwitchText.innerHTML = 'Don\'t have an account? <button id="authSwitchBtn">Sign up</button>';
                 confirmPasswordGroup.classList.add('hidden');
-                
-                // Update the switch button event listener
-                document.getElementById('authSwitchBtn').addEventListener('click', toggleAuthMode);
+                nameGroup.classList.add('hidden');
             } else {
-                // Switch to signup mode
-                authTitle.textContent = 'Create Your MiniChat Account';
-                authSubtitle.textContent = 'Join our secure, private messaging platform';
+                authTitle.textContent = 'Create Your Account';
+                authSubtitle.textContent = 'Join MiniChat community';
                 authSubmitText.textContent = 'Sign Up';
                 authSwitchText.innerHTML = 'Already have an account? <button id="authSwitchBtn">Login</button>';
                 confirmPasswordGroup.classList.remove('hidden');
-                
-                // Update the switch button event listener
-                document.getElementById('authSwitchBtn').addEventListener('click', toggleAuthMode);
+                nameGroup.classList.remove('hidden');
             }
         }
         
-        /**
-         * Log out the current user
-         */
-        function logout() {
-            // Clear current user
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const name = document.getElementById('name').value.trim() || username;
+            
+            if (!username || !password) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!isLoginMode && password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (!isLoginMode && password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            try {
+                if (isLoginMode) {
+                    // Login
+                    const passwordHash = await hashPassword(password);
+                    
+                    // Get user from database
+                    const { data: users, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('username', username)
+                        .eq('password_hash', passwordHash);
+                    
+                    if (error) throw error;
+                    
+                    if (users.length === 0) {
+                        showNotification('Invalid username or password', 'error');
+                        return;
+                    }
+                    
+                    const user = users[0];
+                    currentUser = {
+                        id: user.id,
+                        username: user.username,
+                        name: user.name || user.username,
+                        avatarColor: user.avatar_color || '#3a86ff'
+                    };
+                    
+                    // Update online status
+                    await supabase
+                        .from('users')
+                        .update({ is_online: true, last_seen: new Date().toISOString() })
+                        .eq('id', user.id);
+                    
+                    showNotification('Login successful!', 'success');
+                    showChatApp();
+                    
+                } else {
+                    // Sign up
+                    const passwordHash = await hashPassword(password);
+                    
+                    // Check if username exists
+                    const { data: existingUsers, error: checkError } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('username', username);
+                    
+                    if (checkError) throw checkError;
+                    
+                    if (existingUsers.length > 0) {
+                        showNotification('Username already exists', 'error');
+                        return;
+                    }
+                    
+                    // Create new user
+                    const { data: newUser, error: createError } = await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                username: username,
+                                password_hash: passwordHash,
+                                name: name,
+                                avatar_color: '#3a86ff',
+                                is_online: true
+                            }
+                        ])
+                        .select()
+                        .single();
+                    
+                    if (createError) throw createError;
+                    
+                    currentUser = {
+                        id: newUser.id,
+                        username: newUser.username,
+                        name: newUser.name,
+                        avatarColor: newUser.avatar_color
+                    };
+                    
+                    showNotification('Account created successfully!', 'success');
+                    showChatApp();
+                }
+                
+                authForm.reset();
+                
+            } catch (error) {
+                console.error('Auth error:', error);
+                showNotification('An error occurred. Please try again.', 'error');
+            }
+        }
+        
+        async function logout() {
+            if (currentUser) {
+                // Update online status
+                await supabase
+                    .from('users')
+                    .update({ is_online: false, last_seen: new Date().toISOString() })
+                    .eq('id', currentUser.id);
+            }
+            
+            // Unsubscribe from realtime
+            if (messageSubscription) {
+                supabase.removeChannel(messageSubscription);
+            }
+            
             currentUser = null;
             selectedUser = null;
-            
-            // Clear localStorage
-            localStorage.removeItem('minichat_user');
-            
-            // Show auth screen
             showAuth();
-            
-            // Reset to login mode
-            if (!isLoginMode) {
-                toggleAuthMode();
-            }
+            showNotification('Logged out successfully', 'info');
         }
         
         // ====================
-        // CHAT APP FUNCTIONS
+        // CHAT FUNCTIONS
         // ====================
         
-        /**
-         * Show the chat application (after successful login)
-         */
         function showChatApp() {
-            // Hide auth container, show chat app
             authContainer.classList.add('hidden');
             chatApp.classList.remove('hidden');
-            
-            // Initialize chat app
             initChatApp();
         }
         
-        /**
-         * Show the authentication screen
-         */
         function showAuth() {
-            // Hide chat app, show auth container
             chatApp.classList.add('hidden');
             authContainer.classList.remove('hidden');
+            isLoginMode = true;
+            toggleAuthMode();
         }
         
-        /**
-         * Initialize the chat application
-         */
-        function initChatApp() {
-            // Update current user info in sidebar
-            updateCurrentUserInfo();
-            
-            // Load users list
-            renderUsersList();
-            
-            // Select the first user by default
-            if (mockUsers.length > 0) {
-                selectUser(mockUsers[0]);
-            }
-            
-            // Load messages for selected user
-            renderMessages();
-            
-            // Set up event listeners
-            setupChatEventListeners();
-            
-            // Set up theme from localStorage
-            setupTheme();
-        }
-        
-        /**
-         * Update current user information in the sidebar
-         */
-        function updateCurrentUserInfo() {
+        async function initChatApp() {
             if (!currentUser) return;
             
+            // Update UI
             currentUserAvatar.textContent = getInitials(currentUser.name);
             currentUserAvatar.style.backgroundColor = currentUser.avatarColor;
             currentUsername.textContent = currentUser.name;
+            currentUserStatusText.textContent = 'Online';
             
-            // Update status
-            currentUserStatus.classList.toggle('offline', !currentUser.isOnline);
-            currentUserStatusText.textContent = currentUser.isOnline ? 'Online' : 'Offline';
+            // Load users
+            await loadUsers();
+            
+            // Set up realtime subscription
+            setupRealtime();
+            
+            // Enable message input
+            messageInput.disabled = false;
+            messageInput.placeholder = "Type your message...";
+            sendBtn.disabled = false;
         }
         
-        /**
-         * Render the list of users in the sidebar
-         */
+        async function loadUsers() {
+            try {
+                // Get all users except current user
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .neq('username', currentUser.username)
+                    .order('is_online', { ascending: false })
+                    .order('last_seen', { ascending: false });
+                
+                if (error) throw error;
+                
+                allUsers = users || [];
+                renderUsersList();
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showNotification('Failed to load users', 'error');
+            }
+        }
+        
         function renderUsersList() {
-            usersList.innerHTML = '';
-            
-            // Filter users based on search input
             const searchTerm = userSearch.value.toLowerCase();
-            const filteredUsers = mockUsers.filter(user => 
-                user.name.toLowerCase().includes(searchTerm) || 
-                user.username.toLowerCase().includes(searchTerm)
+            const filteredUsers = allUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                (user.name && user.name.toLowerCase().includes(searchTerm))
             );
             
-            // Create user items
+            usersList.innerHTML = '';
+            
             filteredUsers.forEach(user => {
                 const userElement = document.createElement('div');
                 userElement.className = `user-item ${selectedUser && selectedUser.id === user.id ? 'active' : ''}`;
                 userElement.dataset.userId = user.id;
                 
+                const lastSeen = user.is_online ? 'Online' : formatDate(user.last_seen);
+                const avatarColor = user.avatar_color || '#3a86ff';
+                
                 userElement.innerHTML = `
-                    <div class="user-item-avatar" style="background-color: ${user.avatarColor}">
-                        ${getInitials(user.name)}
+                    <div class="user-item-avatar" style="background-color: ${avatarColor}">
+                        ${getInitials(user.name || user.username)}
                     </div>
                     <div class="user-item-info">
-                        <h4>${user.name}</h4>
+                        <h4>${user.name || user.username}</h4>
                         <p>
-                            <span class="status-indicator ${user.isOnline ? '' : 'offline'}"></span>
-                            <span>${user.isOnline ? 'Online' : user.lastSeen}</span>
+                            <span class="status-indicator ${user.is_online ? '' : 'offline'}"></span>
+                            <span>${lastSeen}</span>
                         </p>
                     </div>
                 `;
@@ -1248,32 +1097,32 @@
                 userElement.addEventListener('click', () => selectUser(user));
                 usersList.appendChild(userElement);
             });
+            
+            if (filteredUsers.length === 0) {
+                usersList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light)">No users found</div>';
+            }
         }
         
-        /**
-         * Select a user to chat with
-         * @param {Object} user - User object to select
-         */
-        function selectUser(user) {
+        async function selectUser(user) {
             selectedUser = user;
             
-            // Update UI to show selected user
+            // Update UI
+            chatUserAvatar.textContent = getInitials(user.name || user.username);
+            chatUserAvatar.style.backgroundColor = user.avatar_color || '#3a86ff';
+            chatUserName.textContent = user.name || user.username;
+            chatUserStatus.classList.toggle('offline', !user.is_online);
+            chatUserStatusText.textContent = user.is_online ? 'Online' : `Last seen ${formatDate(user.last_seen)}`;
+            
+            // Update active state in list
             document.querySelectorAll('.user-item').forEach(item => {
                 item.classList.remove('active');
-                if (parseInt(item.dataset.userId) === user.id) {
+                if (item.dataset.userId === user.id) {
                     item.classList.add('active');
                 }
             });
             
-            // Update chat header with selected user info
-            chatUserAvatar.textContent = getInitials(user.name);
-            chatUserAvatar.style.backgroundColor = user.avatarColor;
-            chatUserName.textContent = user.name;
-            chatUserStatus.classList.toggle('offline', !user.isOnline);
-            chatUserStatusText.textContent = user.isOnline ? 'Online' : `Last seen ${user.lastSeen}`;
-            
-            // Load messages with selected user
-            renderMessages();
+            // Load messages
+            await loadMessages();
             
             // Close sidebar on mobile
             if (window.innerWidth <= 768) {
@@ -1281,255 +1130,215 @@
             }
         }
         
-        /**
-         * Render messages in the chat area
-         */
-        function renderMessages() {
-            if (!selectedUser) return;
+        async function loadMessages() {
+            if (!selectedUser || !currentUser) return;
             
-            // Clear messages container
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUser.id})`)
+                    .order('created_at', { ascending: true });
+                
+                if (error) throw error;
+                
+                renderMessages(messages || []);
+                
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                showNotification('Failed to load messages', 'error');
+            }
+        }
+        
+        function renderMessages(messages) {
             messagesContainer.innerHTML = '';
             
-            // Filter messages for the current conversation
-            const conversationMessages = mockMessages.filter(msg => 
-                (msg.senderId === currentUser.id && msg.receiverId === selectedUser.id) ||
-                (msg.senderId === selectedUser.id && msg.receiverId === currentUser.id)
-            );
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-light)">
+                        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <p>No messages yet. Start the conversation!</p>
+                    </div>
+                `;
+                return;
+            }
             
-            // Sort by timestamp (newest first for scrolling)
-            conversationMessages.sort((a, b) => a.id - b.id);
-            
-            // Create message elements
-            conversationMessages.forEach(msg => {
-                const isSent = msg.senderId === currentUser.id;
+            messages.forEach(message => {
+                const isSent = message.sender_id === currentUser.id;
                 const messageElement = document.createElement('div');
                 messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
-                messageElement.dataset.messageId = msg.id;
+                messageElement.dataset.messageId = message.id;
                 
-                // Simulate message read status
-                if (isSent && msg.isRead) {
-                    // For sent messages, simulate auto-delete after they're read
-                    setTimeout(() => simulateAutoDelete(msg.id), 1000);
-                } else if (!isSent && !msg.isRead) {
-                    // For received messages, mark as read after a delay (simulating user reading)
-                    setTimeout(() => {
-                        simulateMessageRead(msg.id);
-                        simulateAutoDelete(msg.id);
-                    }, 2000);
-                }
-                
-                // Decrypt message content (simulated)
-                const decryptedContent = mockDecrypt(msg.content);
+                const time = formatTime(message.created_at);
                 
                 messageElement.innerHTML = `
-                    <div class="message-content">${sanitizeInput(decryptedContent)}</div>
+                    <div class="message-content">${message.content}</div>
                     <div class="message-time">
-                        <span>${msg.timestamp}</span>
-                        ${isSent ? `<span class="read-receipt">${msg.isRead ? '<i class="fas fa-check-double"></i>' : '<i class="fas fa-check"></i>'}</span>` : ''}
+                        <span>${time}</span>
+                        ${isSent ? `<span><i class="fas fa-check${message.is_read ? '-double' : ''}"></i></span>` : ''}
                     </div>
                 `;
                 
                 messagesContainer.appendChild(messageElement);
             });
             
-            // Add typing indicator at the end
-            messagesContainer.appendChild(typingIndicator);
-            
-            // Scroll to the bottom
+            // Scroll to bottom
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
         
-        /**
-         * Send a new message
-         * @param {string} content - Message content
-         */
-        function sendMessage(content) {
-            if (!content.trim() || !selectedUser) return;
+        async function sendMessage(content) {
+            if (!content.trim() || !selectedUser || !currentUser) return;
             
-            // Create new message object
-            const newMessage = {
-                id: mockMessages.length + 1,
-                senderId: currentUser.id,
-                receiverId: selectedUser.id,
-                content: mockEncrypt(content), // Simulate encryption
-                timestamp: getCurrentTime(),
-                isRead: false
-            };
-            
-            // Add to messages array
-            mockMessages.push(newMessage);
-            
-            // Re-render messages
-            renderMessages();
-            
-            // Simulate recipient typing and response (for demo purposes)
-            setTimeout(() => {
-                simulateTyping(selectedUser.id);
+            try {
+                const { data, error } = await supabase
+                    .from('messages')
+                    .insert([
+                        {
+                            sender_id: currentUser.id,
+                            receiver_id: selectedUser.id,
+                            content: content,
+                            is_read: false
+                        }
+                    ])
+                    .select()
+                    .single();
                 
-                // Simulate automatic response for some users
-                if (selectedUser.id === 1 || selectedUser.id === 3) {
-                    setTimeout(() => {
-                        const responses = [
-                            "Thanks for your message!",
-                            "That's interesting, tell me more.",
-                            "I'll get back to you soon.",
-                            "Got it, thanks!",
-                            "I was thinking the same thing!"
-                        ];
-                        
-                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                        
-                        const responseMessage = {
-                            id: mockMessages.length + 1,
-                            senderId: selectedUser.id,
-                            receiverId: currentUser.id,
-                            content: mockEncrypt(randomResponse),
-                            timestamp: getCurrentTime(),
-                            isRead: false
-                        };
-                        
-                        mockMessages.push(responseMessage);
-                        renderMessages();
-                    }, 2000);
-                }
-            }, 1000);
+                if (error) throw error;
+                
+                // Clear input
+                messageInput.value = '';
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Failed to send message', 'error');
+            }
         }
         
-        /**
-         * Set up chat event listeners
-         */
-        function setupChatEventListeners() {
-            // User search
+        function setupRealtime() {
+            if (!currentUser) return;
+            
+            // Subscribe to new messages
+            messageSubscription = supabase
+                .channel('messages-channel')
+                .on('postgres_changes', 
+                    { 
+                        event: 'INSERT', 
+                        schema: 'public', 
+                        table: 'messages',
+                        filter: `receiver_id=eq.${currentUser.id}`
+                    }, 
+                    (payload) => {
+                        // If message is for current user and from selected user
+                        if (selectedUser && payload.new.sender_id === selectedUser.id) {
+                            // Add message to UI
+                            const messages = [{...payload.new}];
+                            renderMessages([...document.querySelectorAll('.message')].map(m => ({
+                                content: m.querySelector('.message-content').textContent,
+                                created_at: new Date().toISOString(),
+                                sender_id: m.classList.contains('sent') ? currentUser.id : selectedUser.id
+                            })).concat(messages));
+                            
+                            // Mark as read
+                            supabase
+                                .from('messages')
+                                .update({ is_read: true })
+                                .eq('id', payload.new.id);
+                        }
+                        
+                        // Show notification for new message
+                        if (payload.new.sender_id !== currentUser.id) {
+                            const sender = allUsers.find(u => u.id === payload.new.sender_id);
+                            if (sender) {
+                                showNotification(`New message from ${sender.name || sender.username}`, 'info');
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+        }
+        
+        // ====================
+        // EVENT LISTENERS
+        // ====================
+        
+        function setupEventListeners() {
+            // Auth
+            authForm.addEventListener('submit', handleAuthSubmit);
+            authSwitchBtn.addEventListener('click', toggleAuthMode);
+            
+            // Search
             userSearch.addEventListener('input', renderUsersList);
             
-            // Send message
+            // Messages
             messageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const content = messageInput.value.trim();
-                if (content) {
+                if (content && selectedUser) {
                     sendMessage(content);
-                    messageInput.value = '';
                 }
             });
             
-            // Typing indicator
-            messageInput.addEventListener('input', () => {
-                // Clear previous timeout
-                if (typingTimeout) {
-                    clearTimeout(typingTimeout);
-                }
-                
-                // Set new timeout
-                typingTimeout = setTimeout(() => {
-                    // Typing stopped
-                }, 1000);
+            // Theme
+            themeToggle.addEventListener('click', () => {
+                isDarkMode = !isDarkMode;
+                document.body.classList.toggle('dark-mode', isDarkMode);
+                const icon = themeToggle.querySelector('i');
+                icon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+                localStorage.setItem('minichat_theme', isDarkMode ? 'dark' : 'light');
             });
             
-            // Clear chat button
-            clearChatBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to clear this chat?')) {
-                    // Filter out messages with selected user
-                    mockMessages = mockMessages.filter(msg => 
-                        !((msg.senderId === currentUser.id && msg.receiverId === selectedUser.id) ||
-                          (msg.senderId === selectedUser.id && msg.receiverId === currentUser.id))
-                    );
-                    
-                    // Re-render messages
-                    renderMessages();
-                }
-            });
-            
-            // Logout button
-            logoutBtn.addEventListener('click', logout);
-            
-            // Mobile menu button
+            // Mobile menu
             mobileMenuBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('active');
             });
             
-            // Click outside sidebar to close on mobile
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768 && 
-                    !sidebar.contains(e.target) && 
-                    !mobileMenuBtn.contains(e.target) &&
-                    sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+            // Refresh
+            refreshBtn.addEventListener('click', async () => {
+                await loadUsers();
+                if (selectedUser) {
+                    await loadMessages();
                 }
+                showNotification('Refreshed', 'info');
             });
-        }
-        
-        // ====================
-        // THEME MANAGEMENT
-        // ====================
-        
-        /**
-         * Set up theme from localStorage
-         */
-        function setupTheme() {
-            // Check for saved theme preference
-            const savedTheme = localStorage.getItem('minichat_theme');
-            isDarkMode = savedTheme === 'dark';
             
-            // Apply theme
-            updateTheme();
-            
-            // Set up theme toggle
-            themeToggle.addEventListener('click', toggleTheme);
-        }
-        
-        /**
-         * Toggle between light and dark mode
-         */
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            updateTheme();
-            
-            // Save preference to localStorage
-            localStorage.setItem('minichat_theme', isDarkMode ? 'dark' : 'light');
-        }
-        
-        /**
-         * Update the UI to reflect the current theme
-         */
-        function updateTheme() {
-            // Toggle dark mode class on body
-            document.body.classList.toggle('dark-mode', isDarkMode);
-            
-            // Update theme toggle icon
-            const icon = themeToggle.querySelector('i');
-            icon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            // Logout
+            logoutBtn.addEventListener('click', logout);
         }
         
         // ====================
         // INITIALIZATION
         // ====================
         
-        // Initialize the application when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            initAuth();
+        async function init() {
+            // Check saved theme
+            const savedTheme = localStorage.getItem('minichat_theme');
+            isDarkMode = savedTheme === 'dark';
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            themeToggle.querySelector('i').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
             
-            // Add some initial messages for demo purposes
-            setTimeout(() => {
-                if (currentUser) {
-                    // Simulate receiving a new message after a delay
-                    const welcomeMessage = {
-                        id: mockMessages.length + 1,
-                        senderId: 1, // Alice
-                        receiverId: currentUser.id,
-                        content: mockEncrypt("Welcome to MiniChat! Your messages are end-to-end encrypted."),
-                        timestamp: getCurrentTime(),
-                        isRead: false
-                    };
-                    
-                    mockMessages.push(welcomeMessage);
-                    
-                    // If Alice is selected, re-render messages
-                    if (selectedUser && selectedUser.id === 1) {
-                        renderMessages();
-                    }
+            // Check if user is logged in
+            const savedUser = localStorage.getItem('minichat_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    await showChatApp();
+                } catch (e) {
+                    localStorage.removeItem('minichat_user');
                 }
-            }, 2000);
-        });
+            }
+            
+            setupEventListeners();
+        }
+        
+        // Save user to localStorage when logged in
+        function saveUserToLocalStorage() {
+            if (currentUser) {
+                localStorage.setItem('minichat_user', JSON.stringify(currentUser));
+            }
+        }
+        
+        // Start the app
+        init();
     </script>
 </body>
-</html>
+                            </html>
